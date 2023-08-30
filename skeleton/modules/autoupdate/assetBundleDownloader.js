@@ -181,16 +181,14 @@ export default class AssetBundleDownloader {
                 self.queue.push((callback) => {
                     self.httpClient(
                         downloadUrl,
-                        (error, response, body) => {
-                            if (!error) {
-                                onResponse(asset, response, body);
-                            } else {
-                                onFailure(asset, error);
-                            }
-                            callback();
+                        {
+                            headers: new Headers({ 'Response-Type': 'blob' })
                         }
                     )
-                        .then((response) => ({ response, body: response.json() }))
+                        .then((response) => {
+                            if (response.status !== 200) throw new Error(`Non-success code ${response.status} for ${asset.filePath}`);
+                            return { response, body: Promise.resolve(response.json()) };
+                        })
                         .then(({ body, response }) => onResponse(asset, response, body))
                         .catch((error) => onFailure(asset, error))
                         .finally(() => callback());

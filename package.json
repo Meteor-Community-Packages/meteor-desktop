@@ -60,7 +60,6 @@
     "proxyquire": "1.8.0",
     "queue": "4.5.1",
     "reify": "0.20.12",
-    "request": "2.88.2",
     "rewire": "3.0.2",
     "run-sequence": "1.2.2",
     "semistandard": "^16.0.1",
