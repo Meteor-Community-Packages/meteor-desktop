@@ -34,7 +34,9 @@ import fs from 'fs-plus';
 import rimraf from 'rimraf';
 import originalFs from 'original-fs';
 import url from 'url';
+// TODO replace request with fetch
 import request from 'request';
+// import fetch from 'node-fetch';
 import shell from 'shelljs';
 
 import AssetBundle from './assetBundle';

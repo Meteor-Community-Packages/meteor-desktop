@@ -32,8 +32,7 @@
 import fs from 'fs';
 import originalFs from 'original-fs';
 import url from 'url';
-// TODO: maybe use node-fetch?
-import request from 'request';
+import fetch from 'node-fetch';
 import queue from 'queue';
 import IsDesktopInjector from './isDesktopInjector';
 
@@ -56,7 +55,7 @@ export default class AssetBundleDownloader {
         this.assetBundle = assetBundle;
         this.baseUrl = baseUrl;
         this.injector = new IsDesktopInjector();
-        this.httpClient = request;
+        this.httpClient = fetch;
 
         this.eTagWithSha1HashPattern = new RegExp('"([0-9a-f]{40})"');
 
@@ -165,8 +164,8 @@ export default class AssetBundleDownloader {
 
             if (self.missingAssets.length === 0) {
                 self.log.verbose(
-                    'finished downloading new asset bundle version:' +
-                    `${self.assetBundle.getVersion()}`
+                    'finished downloading new asset bundle version:'
+                    + `${self.assetBundle.getVersion()}`
                 );
 
                 if (self.onFinished) {
@@ -181,7 +180,7 @@ export default class AssetBundleDownloader {
                 const downloadUrl = self.downloadUrlForAsset(asset);
                 self.queue.push((callback) => {
                     self.httpClient(
-                        { uri: downloadUrl, encoding: null },
+                        downloadUrl,
                         (error, response, body) => {
                             if (!error) {
                                 onResponse(asset, response, body);
@@ -190,7 +189,11 @@ export default class AssetBundleDownloader {
                             }
                             callback();
                         }
-                    );
+                    )
+                        .then((response) => ({ response, body: response.json() }))
+                        .then(({ body, response }) => onResponse(asset, response, body))
+                        .catch((error) => onFailure(asset, error))
+                        .finally(() => callback());
                 });
             }
         });
@@ -263,15 +266,15 @@ export default class AssetBundleDownloader {
 
                     if (actualHash !== expectedHash) {
                         throw new Error(
-                            `hash mismatch for asset: ${asset.filePath} - expected hash:` +
-                            `${expectedHash} != ${actualHash}`
+                            `hash mismatch for asset: ${asset.filePath} - expected hash:`
+                            + `${expectedHash} != ${actualHash}`
                         );
                     } else if (asset.entrySize !== body.length) {
                         // This check is specific to this integration. It is not present in
                         // Cordova integration.
                         // For now will not throw here as it is accepted on Cordova.
-                        this.log.debug(`wrong size for: ${asset.filePath} - expected: ` +
-                            `${asset.entrySize} != ${body.length}`);
+                        this.log.debug(`wrong size for: ${asset.filePath} - expected: `
+                            + `${asset.entrySize} != ${body.length}`);
                     }
                 } else {
                     this.log.warn(`invalid etag format for ${asset.urlPath}: ${eTag}`);
@@ -312,8 +315,8 @@ export default class AssetBundleDownloader {
         if (actualVersion) {
             if (actualVersion !== expectedVersion) {
                 throw new Error(
-                    `version mismatch for index page, expected: ${expectedVersion}` +
-                    `, actual: ${actualVersion}`
+                    `version mismatch for index page, expected: ${expectedVersion}`
+                    + `, actual: ${actualVersion}`
                 );
             }
         }
@@ -329,8 +332,8 @@ export default class AssetBundleDownloader {
 
         if (previousRootUrl.hostname !== 'localhost' && rootUrl.hostname === 'localhost') {
             throw new Error(
-                'ROOT_URL in downloaded asset bundle would change current ROOT_URL ' +
-                'to localhost. Make sure ROOT_URL has been configured correctly on the server.'
+                'ROOT_URL in downloaded asset bundle would change current ROOT_URL '
+                + 'to localhost. Make sure ROOT_URL has been configured correctly on the server.'
             );
         }
 
@@ -342,8 +345,8 @@ export default class AssetBundleDownloader {
 
         if (appId !== this.configuration.appId) {
             throw new Error(
-                'appId in downloaded asset bundle does not match current appId. Make sure the' +
-                ` server at ${rootUrlString} is serving the right app.`
+                'appId in downloaded asset bundle does not match current appId. Make sure the'
+                + ` server at ${rootUrlString} is serving the right app.`
             );
         }
     }
