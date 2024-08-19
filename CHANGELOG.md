@@ -1,3 +1,6 @@
+## v3.3.0
+* Add Typescript support
+
 ## v3.2.1
 * Minor version upgrade of NPM dependencies
 * Fix registering custom 'meteor' scheme [`#39`](https://github.com/Meteor-Community-Packages/meteor-desktop/pull/39) by [@ramijarrar](https://github.com/ramijarrar)
