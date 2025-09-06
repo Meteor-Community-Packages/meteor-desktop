@@ -748,7 +748,11 @@ class MeteorDesktopBundler {
             shelljs.mkdir('-p', desktopTmpPath);
             shelljs.mkdir('-p', path.join(desktopTmpPath, 'modules'));
             shelljs.mkdir('-p', path.join(desktopTmpPath, 'assets'));
-            
+
+            shelljs.chmod('-R', '777', desktopTmpPath);
+            shelljs.chmod('-R', '777', path.join(desktopTmpPath, 'modules'));
+            shelljs.chmod('-R', '777', path.join(desktopTmpPath, 'assets'));
+
             // Copy files from .desktop to .desktop-staging
             shelljs.ls('-A', desktopPath).forEach(item => {
                 const source = path.join(desktopPath, item);
@@ -758,6 +762,7 @@ class MeteorDesktopBundler {
                 if (fs.statSync(source).isDirectory()) {
                     if (!fs.existsSync(target)) {
                         shelljs.mkdir('-p', target);
+                        shelljs.chmod('-R', '777', target);
                     }
                     shelljs.cp('-rf', path.join(source, '*'), target);
                 } else {
@@ -769,9 +774,11 @@ class MeteorDesktopBundler {
             // Ensure we create empty directories even if they're not in the source
             if (!fs.existsSync(path.join(desktopTmpPath, 'modules'))) {
                 shelljs.mkdir('-p', path.join(desktopTmpPath, 'modules'));
+                shelljs.chmod('-R', '777', path.join(desktopTmpPath, 'modules'));
             }
             if (!fs.existsSync(path.join(desktopTmpPath, 'assets'))) {
                 shelljs.mkdir('-p', path.join(desktopTmpPath, 'assets'));
+                shelljs.chmod('-R', '777', path.join(desktopTmpPath, 'assets'));
             }
             
             // Delete test files and macOS metadata files
@@ -782,11 +789,11 @@ class MeteorDesktopBundler {
             ]);
             
             // Set proper permissions
-            shelljs.chmod('-R', '644', desktopTmpPath);
+            shelljs.chmod('-R', '777', desktopTmpPath);
             // Make directories executable (necessary for traversal)
             shelljs.find(desktopTmpPath).forEach(function(file) {
                 if (fs.statSync(file).isDirectory()) {
-                    shelljs.chmod('755', file);
+                    shelljs.chmod('777', file);
                 }
             });
             shelljs.cp('-rf', desktopPath, desktopTmpPath);
@@ -880,7 +887,7 @@ class MeteorDesktopBundler {
                         const cacheEntry = await cacache.get(this.cachePath, cacheKey);
                         logDebug(`[meteor-desktop] Loaded from cache: ${file}`);
                         let code = cacheEntry.data;
-
+                    
                         if (settings.env === 'prod' && uglifyingEnabled) {
                             const terserResult = await terser.minify(code.toString('utf8'), options);
                             if (terserResult.error) {
@@ -888,27 +895,25 @@ class MeteorDesktopBundler {
                             }
                             code = terserResult.code;
                         }
-
+                    
                         fs.writeFileSync(filePath, code);
                     } catch (cacheError) {
                         logDebug(`[meteor-desktop] Processing from disk: ${file}`);
                         try {
-                            // const transformed = await babelCore.transformAsync(fileContents[file], {
-                            //     presets: [preset]
-                            // });
-                            const transformed = await babelCore.transformAsync(code, {
+                            const fileContent = fileContents[file];
+                            const transformed = await babelCore.transformAsync(fileContent, {
                                 presets: [ [babelPresetEnv, { targets: { node: '14' } }] ]
-                              });
-
+                            });
+                    
                             if (!transformed || !transformed.code) {
                                 throw new Error(`Babel transformation failed for file ${file}`);
                             }
-
+                    
                             let code = transformed.code;
-
+                    
                             await cacache.put(this.cachePath, `${file}-${hashes[file]}`, code);
                             logDebug(`[meteor-desktop] Cached: ${file}`);
-
+                    
                             if (settings.env === 'prod' && uglifyingEnabled) {
                                 const terserResult = await terser.minify(code, options);
                                 if (terserResult.error) {
@@ -916,7 +921,7 @@ class MeteorDesktopBundler {
                                 }
                                 code = terserResult.code;
                             }
-
+                    
                             fs.writeFileSync(filePath, code);
                         } catch (transformError) {
                             this.watcherEnabled = true;
