@@ -82,7 +82,7 @@
     "@babel/runtime": "7.26.10",
     "@electron/asar": "3.2.10",
     "acorn": "8.12.1",
-    "cacache": "17.1.4",
+    "cacache": "20.0.3",
     "commander": "2.20.3",
     "cross-spawn": "6.0.6",
     "del": "2.2.2",
